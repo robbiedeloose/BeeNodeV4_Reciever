@@ -38,9 +38,7 @@ void setup() {
   delay(1000);
   Serial.println(F("BeeNode v4.0.1 - nRF24 tester"));
   initRFRadio(90, thisNode); // start nRF24l radio
-
   pinMode(3,INPUT); 
-
   Wire.begin(8);  // join i2c bus with address #8
   Wire.onRequest(requestEvent); // register event
       attachInterrupt(digitalPinToInterrupt(3), wake, FALLING);
