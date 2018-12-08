@@ -25,6 +25,7 @@ Payload_t plBuffer[BUFFERSIZE];
 ////////////////////////// FUNCTION DECLARATIONS ///////////////////////////////
 void initRFRadio(uint8_t channel, uint16_t nodeAddress);
 void checkForNetworkData();
+void fillBufferArray(Payload_t *payloadAddress);
 void requestEvent();
 void wake();
 
