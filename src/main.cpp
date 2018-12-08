@@ -18,17 +18,17 @@ struct Payload_t {
   uint16_t humidity;
 };
 
+// Globalstruct array to collect data before Sending
+#define BUFFERSIZE 6
+Payload_t plBuffer[BUFFERSIZE];
+
 ////////////////////////// FUNCTION DECLARATIONS ///////////////////////////////
 void initRFRadio(uint8_t channel, uint16_t nodeAddress);
 void checkForNetworkData();
 void requestEvent();
+void wake();
 
 uint8_t isAwake = 0;
-
-void wake() {
-  detachInterrupt(1); 
-  isAwake = 1;
-}
 
 /////////////// SETUP //////////////////////////////////////////////////////////
 void setup() {
@@ -46,11 +46,8 @@ void setup() {
   delay(1000);
 }
 
-
-
 /////////////// LOOP ///////////////////////////////////////////////////////////
 void loop() { 
-
   if (isAwake == 1) {
     Serial.println("awake");
     delay(1000);
@@ -68,14 +65,40 @@ void checkForNetworkData() {
   network.update();
   RF24NetworkHeader header;
   Payload_t payload;
-
   while (network.available()) { // Any data on the network ready to read
     network.read(header, &payload, sizeof(payload));
-    Serial.print(" Node ID: ");
-    for (byte b : payload.id)
-      Serial.print(b, HEX);
+ 
+    // fill buffer
+    fillBufferArray(&payload);
+
     Serial.println();
+    Serial.print(" - temp: ");
+    Serial.println(payload.temp);
+    Serial.print(" - hum: ");
+    Serial.println(payload.humidity);
+    Serial.print(" - bat: ");
+    Serial.println(payload.bat);
+    Serial.print(" - weight: ");
+    Serial.println(payload.weight);
   }
+}
+
+void fillBufferArray(Payload_t *payloadAddress) {
+  uint8_t bufferLocation = 0;
+  // get next free buffer location
+  for (int i = 0; i < BUFFERSIZE; i++) {
+    if (plBuffer[bufferLocation].bat != 0)
+      bufferLocation++;
+  }
+  Serial.print(F(" Array position "));
+  Serial.println(bufferLocation); // print the buffer location that is used
+  for (int i = 0; i < 4; i++) {
+    plBuffer[bufferLocation].id[i] = payloadAddress->id[i];
+  }
+  plBuffer[bufferLocation].temp = payloadAddress->temp;
+  plBuffer[bufferLocation].humidity = payloadAddress->humidity;
+  plBuffer[bufferLocation].bat = payloadAddress->bat;
+  plBuffer[bufferLocation].weight = payloadAddress->weight;
 }
 
 //////////// init nrf radio ////////////////////////////////////////////////////
@@ -95,7 +118,15 @@ void initRFRadio(uint8_t channel, uint16_t nodeAddress) { // clean
 void requestEvent() {
   isAwake = 0;
   Serial.println("trigger");
-  Wire.write("hello "); // respond with message of 6 bytes as expected by master
+  char buf[120] = "";
+  sprintf(buf, "%i,%u,%u,%02X%02X%02X%02X", plBuffer[0].temp,plBuffer[0].humidity, plBuffer[0].bat, plBuffer[0].id[0], plBuffer[0].id[1], plBuffer[0].id[2], plBuffer[0].id[3]);
+  Serial.println(buf);
+  Wire.write(buf); // respond with message of 6 bytes as expected by master
   Serial.println("set interrupt");
   attachInterrupt(digitalPinToInterrupt(3), wake, LOW);
+}
+
+void wake() {
+  detachInterrupt(1); 
+  isAwake = 1;
 }
