@@ -57,7 +57,7 @@ void loop() {
     delay(1000);
   }
   else {
-    Serial.println("sleep");
+    //Serial.println("sleep");
     checkForNetworkData();
     delay(250);
     network.sleepNode(1, digitalPinToInterrupt(2)); // x cycles of watchdog time (see below), interupt pin
@@ -112,6 +112,7 @@ void clearBufferArray(){
   Serial.println("Clear buffer array");
   for (int i = 0; i < BUFFERSIZE; i++) {
     plBuffer[i].bat = 0;
+    
   }
 }
 
